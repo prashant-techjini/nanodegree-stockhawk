@@ -1,13 +1,21 @@
 package com.sam_chordas.android.stockhawk.rest;
 
 import android.content.ContentProviderOperation;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
+
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
-import java.util.ArrayList;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
 
 /**
  * Created by sam_chordas on 10/8/15.
@@ -30,14 +38,18 @@ public class Utils {
         if (count == 1){
           jsonObject = jsonObject.getJSONObject("results")
               .getJSONObject("quote");
-          batchOperations.add(buildBatchOperation(jsonObject));
+          if(!jsonObject.isNull("Bid")){
+            batchOperations.add(buildBatchOperation(jsonObject));
+          }
         } else{
           resultsArray = jsonObject.getJSONObject("results").getJSONArray("quote");
 
           if (resultsArray != null && resultsArray.length() != 0){
             for (int i = 0; i < resultsArray.length(); i++){
               jsonObject = resultsArray.getJSONObject(i);
-              batchOperations.add(buildBatchOperation(jsonObject));
+              if(!jsonObject.isNull("Bid")){
+                batchOperations.add(buildBatchOperation(jsonObject));
+              }
             }
           }
         }
@@ -92,4 +104,32 @@ public class Utils {
     }
     return builder.build();
   }
+
+  public static boolean isInternetConnected(Context context) {
+    if (context == null) {
+      return false;
+    }
+    ConnectivityManager connectivityManager =
+            (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+    NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+    return networkInfo != null && networkInfo.isConnectedOrConnecting();
+  }
+
+  public static void showDialog(Context context, String message){
+    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+    builder.setMessage(message);
+    builder.setCancelable(true);
+
+    builder.setPositiveButton(
+            "Ok",
+            new DialogInterface.OnClickListener() {
+              public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+              }
+            });
+
+    AlertDialog alertDialog = builder.create();
+    alertDialog.show();
+  }
+
 }
